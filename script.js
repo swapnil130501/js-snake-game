@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let food = {x: 300, y: 200};  // {x: 15 * 20, y: 10 * 20}
     let snake = [{x : 160, y: 200}, {x: 140, y: 200}, {x: 120, y: 200}];
 
+    let intervalId;
+    let gameSpeed = 200;
+
     let dx = cellSize;
     let dy = 0;
 
@@ -19,11 +22,30 @@ document.addEventListener('DOMContentLoaded', () => {
         //check collision with food
         if(newHead.x === food.x && newHead.y === food.y) {
             score += 10;
+            updateFood();
+
+            if(gameSpeed > 50) {
+                clearInterval(intervalId);
+                gameSpeed -= 10;
+                gameLoop();
+            }
         }
 
         else {
             snake.pop();
         }
+    }
+
+    function updateFood() {
+        let newX = 0;
+        let newY = 0;
+
+        do {
+            newX = Math.floor(Math.random() * 30) * cellSize;
+            newY = Math.floor(Math.random() * 30) * cellSize;
+        } while(snake.some(snakeCell => snakeCell.x === newX && snakeCell.y === newY));
+
+        food = { x: newX, y: newY };
     }
 
     function changeDirection(e) {
@@ -46,6 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dx = cellSize;
             dy = 0;
         }
+    }
+
+    function updateScoreBoard() {
+        const scoreBoard = document.getElementById('score-board');
+        scoreBoard.textContent = `Score: ${score}`
     }
 
     function drawDiv(x, y, className) {
@@ -76,11 +103,28 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(startButton);
     }
 
+    function isGameOver() {
+        const selfCollision = snake.slice(1).some(cell => cell.x === snake[0].x && cell.y === snake[0].y);
+
+        const x = snake[0].x < 0;
+        const y = snake[0].y < 0;
+        const z = snake[0].x >= arenaSize - cellSize;
+        const w = snake[0].y >= arenaSize - cellSize;
+
+        return x || y || z || w || selfCollision;
+    }
+
     function gameLoop() {
-        setInterval(() => {
+        intervalId = setInterval(() => {
+            if(isGameOver()) {
+                clearInterval(intervalId);
+                gameStarted = false;
+                return;
+            }
             updateSnake();
             drawFoodAndSnake();
-        }, 200)
+            updateScoreBoard();
+        }, gameSpeed);
     }
 
     function runGame() {
